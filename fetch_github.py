@@ -11,7 +11,6 @@ def get_python_file_path(github_user, github_repo):
 	get_file_path_request = "https://api.github.com/repos/{}/{}/git/trees/master?recursive=1".format(github_user, github_repo)
 	r = requests.get(get_file_path_request)
 	res = r.json()
-	print(res)
 	for file in res["tree"]:
 		# only contain .py file but not .pyc file
 		if ".py" in file["path"] and ".pyc" not in file["path"]:
@@ -69,8 +68,8 @@ def get_PR_of_commit(github_user, github_repo, commit_sha):
 	content = content.decode("utf-8")
 	pull_json = json.loads(content)
 	if len(pull_json) == 0:
-		print("No PR is associated with the commit " + commit_sha)
-		return -1
+		# print("No PR is associated with the commit " + commit_sha)
+		return ""
 	pr_number = pull_json[0]["number"] # Assumption: each commit has 1 PR
 	return pr_number
 
@@ -84,7 +83,6 @@ def find_issue_of_PR(github_user, github_repo,pr_number):
 	issue_number = []
 	for link in issue_list:
 		issue_number.append(link.split("/")[-1])
-	print(issue_number)
 	return issue_number
 
 # for debuging purposes
@@ -95,7 +93,7 @@ def test_function():
 	file = "surround_cli/surround_cli/cli.py"	
 	sha_commit = "81fec18d001f40b83da43b60fe0df6ae04eb3a07"
 	content = find_issue_of_PR(user, repo, 273)
-	print(content)
+	# print(content)
 	# commits_sha = get_commits(user,repo, file)
 	# print(commits_sha)
 	# for commit_sha in commits_sha:
@@ -109,7 +107,7 @@ def main():
 	user = "a2i2"
 	repo = "surround"
 	data = []
-	py_files = get_python_file_path(user, repo)
+	# py_files = get_python_file_path(user, repo)
 	# print("List of python file in {}/{}".format(user,repo))
 	# print(py_files)
 
@@ -128,11 +126,9 @@ def main():
 
 	# print(python_scripts_with_ML)
 	# print('---')
-	i = 0
+	py_files = ["surround_cli/surround_cli/cli.py", "surround_cli/surround_cli/split_data.py"]
 	for file in py_files:
-		if i == 5:
-			break
-		i = i+1
+
 		file_dict = {}
 		file_dict["file"] = file
 		file_dict["commits"] = []
@@ -140,20 +136,17 @@ def main():
 		for sha in commits:
 			commit_dict = {}
 			commit_dict["sha"] = sha
-			# commit_dict["pr"] = get_PR_of_commit(user,repo,sha)
+			commit_dict["pr"] = get_PR_of_commit(user,repo,sha)
+			commit_dict["issue"] = []
+			if commit_dict["pr"] != "":
+				issue_list = find_issue_of_PR(user,repo,commit_dict["pr"])
+				issue_dict = {}
+				for issue in issue_list:
+					issue_dict["issue_number"] = issue
+					if issue_dict != {}: # may be unneccesary
+						commit_dict["issue"].append(issue_dict)
 			file_dict["commits"].append(commit_dict)
 		data.append(file_dict)
-		# data["file"][-1]["commits"] = []
-		# commits = get_commits(file, user, repo)
-		# for commit in commits:
-		# 	get_PR_of_commit(user,repo,commit)
 	print(data)
 
 main()
-# test_function()
-
-# curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/pierluigiferrari/ssd_keras/git/commits/4ddee4b9c54f0cf0247f20dc7762baba7d50c005
-
-# file commit PR issue
-
-# get commit need to return list of sha (still doing this)
